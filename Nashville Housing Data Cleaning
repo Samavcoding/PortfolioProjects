@@ -54,3 +54,81 @@ Add PropertySplitCity nvarchar(255);
 
 Update NashvilleHousing
 Set PropertySplitCity  = SUBSTRING(PropertyAddress,CHARINDEX(',',PropertyAddress)+1,LEN(PropertyAddress))
+
+Select 
+PARSENAME(REPLACE(owneraddress,',','.'), 3), --streetAdress,
+PARSENAME(REPLACE(owneraddress,',','.'), 2), --city,
+PARSENAME(REPLACE(owneraddress,',','.'), 1) --state
+From PortfolioProject.dbo.NashvilleHousing
+--Where OwnerAddress is not null
+
+
+Alter Table PortfolioProject.dbo.NashvilleHousing 
+Add OwnerSplitAddress nvarchar(255);
+
+Update PortfolioProject.dbo.NashvilleHousing
+Set OwnerSplitAddress  = PARSENAME(REPLACE(owneraddress,',','.'), 3) 
+
+Alter Table PortfolioProject.dbo.NashvilleHousing 
+Add OwnerSplitCity nvarchar(255);
+
+Update PortfolioProject.dbo.NashvilleHousing
+Set OwnerSplitCity  = PARSENAME(REPLACE(owneraddress,',','.'), 2) 
+
+Alter Table PortfolioProject.dbo.NashvilleHousing 
+Add OwnerSplitcityState nvarchar(255);
+
+Update PortfolioProject.dbo.NashvilleHousing
+Set OwnerSplitcityState  = PARSENAME(REPLACE(owneraddress,',','.'), 1) 
+
+select * from PortfolioProject.dbo.NashvilleHousing
+
+
+--Change Y and N to Yes and No in column SoldAsVacant
+
+Select Distinct(SoldAsVacant), Count(SoldAsVacant)
+From PortfolioProject.dbo.NashvilleHousing
+Group by SoldAsVacant
+Order by 2 DESC
+
+Select SoldAsVacant,
+Case When SoldAsVacant = 'Y' then  'Yes'
+	 When SoldAsVacant = 'N' Then 'No'
+	 Else SoldAsVacant 
+	 End
+From PortfolioProject.dbo.NashvilleHousing
+
+Update PortfolioProject.dbo.NashvilleHousing 
+Set SoldAsVacant = 
+Case When SoldAsVacant = 'Y' then  'Yes'
+	 When SoldAsVacant = 'N' Then 'No'
+	 Else SoldAsVacant 
+	 End
+
+--Remove Duplicates
+
+With Row_numCTE AS(
+Select *, 
+	ROW_NUMBER() OVER (
+	PARTITION BY ParcelID,
+				 PropertyAddress,
+				 SalePrice,
+				 SaleDate,
+				 LegalReference
+				 Order by 
+				 UniqueID
+				 ) Row_num
+from PortfolioProject.dbo.NashvilleHousing
+)
+
+DELETE
+From row_numCTE
+Where Row_num > 1
+
+--Delete Unused Column
+
+Select *
+From PortfolioProject.dbo.NashvilleHousing
+
+ALTER TABLE PortfolioProject.dbo.NashvilleHousing
+DROP COLUMN SaleDate, OwnerAddress, TaxDistrict, PropertyAddress
